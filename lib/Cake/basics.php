@@ -116,17 +116,73 @@ TEXT;
 	}
 }
 
-function dbg($var, $die = false) {
-	?>
-		<div class="alert">
-			<button class="close" data-dismiss="alert">×</button>
-			<?php debug($var); ?>
-		</div>
-	<?
-	if ($die) {
-		die();
+/**
+ * This function is a fork of the debug() function that mostly makes sense 
+ * if you are using the twitter bootstrap css files and the bootstrap-alert.js extention.
+ * Else, only the new 'die' argument will offert new functionnality which just die the program 
+ * just after debugged your var.
+ *
+ * Prints out debug information about given variable.
+ *
+ * Only runs if debug level is greater than zero.
+ *
+ * @param boolean $var Variable to show debug information for.
+ * @param boolean $die Variable to die program just after debugged the var.
+ * @param boolean $showHtml If set to true, the method prints the debug data in a browser-friendly way.
+ * @param boolean $showFrom If set to true, the method prints from where the function was called.
+ * @link http://book.cakephp.org/2.0/en/development/debugging.html#basic-debugging
+ * @link http://book.cakephp.org/2.0/en/core-libraries/global-constants-and-functions.html#debug
+ */
+function dbg($var = false, $die = false, $showHtml = null, $showFrom = true) {
+	if (Configure::read('debug') > 0) {
+		App::uses('Debugger', 'Utility');
+		$file = '';
+		$line = '';
+		$lineInfo = '';
+		if ($showFrom) {
+			$trace = Debugger::trace(array('start' => 1, 'depth' => 2, 'format' => 'array'));
+			$file = str_replace(array(CAKE_CORE_INCLUDE_PATH, ROOT), '', $trace[0]['file']);
+			$line = $trace[0]['line'];
+		}
+		$html = <<<HTML
+<div class="alert">
+<button class="close" data-dismiss="alert">×</button>
+<div class="cake-debug-output">
+%s
+<pre class="cake-debug">
+%s
+</pre>
+</div>
+</div>
+HTML;
+		$text = <<<TEXT
+%s
+########## DEBUG ##########
+%s
+###########################
+TEXT;
+		$template = $html;
+		if (php_sapi_name() == 'cli' || $showHtml === false) {
+			$template = $text;
+			if ($showFrom) {
+				$lineInfo = sprintf('%s (line %s)', $file, $line);
+			}
+		}
+		if ($showHtml === null && $template !== $text) {
+			$showHtml = true;
+		}
+		$var = Debugger::exportVar($var, 25);
+		if ($showHtml) {
+			$template = $html;
+			$var = h($var);
+			if ($showFrom) {
+				$lineInfo = sprintf('<span><strong>%s</strong> (line <strong>%s</strong>)</span>', $file, $line);
+			}
+		}
+		printf($template, $lineInfo, $var);
 	}
-} 
+	if ($die) { die();}
+}
 
 if (!function_exists('sortByKey')) {
 
