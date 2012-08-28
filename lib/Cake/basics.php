@@ -116,6 +116,18 @@ TEXT;
 	}
 }
 
+function dbg($var, $die = false) {
+	?>
+		<div class="alert">
+			<button class="close" data-dismiss="alert">×</button>
+			<?php debug($var); ?>
+		</div>
+	<?
+	if ($die) {
+		die();
+	}
+} 
+
 if (!function_exists('sortByKey')) {
 
 /**
